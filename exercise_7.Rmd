@@ -1,0 +1,230 @@
+---
+title: "Exercise 7"
+subtitle: Joe Endris
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+---
+
+```{r libraries, include = FALSE, warning = FALSE, message = FALSE}
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+library(ggfortify)
+library(ggtext)
+library(grid)
+library(gridExtra)
+library(knitr)
+library(lme4)
+library(MuMIn)
+library(olsrr)
+```
+
+## Chlorophyll Fluorescence 
+
+Light energy absorbed by a leaf can undergo one of three fates: it can be used to drive photosynthesis, dissipated as heat, or re-emitted as light — chlorophyll fluorescence.  We  measure chlorophyll fluorescence as a ratio F~v~/F~m~.  We can use this measurement to investigate how stressors damage the photosynthetic apparatus.
+
+
+```{r, echo= FALSE}
+knitr::include_graphics("images/leaf.png", dpi = 200)
+```
+
+```{r data prep, echo = FALSE, warning=FALSE, include= FALSE}
+#read in data sets
+outputs <- read_excel("data/crit_values_final.xlsx")
+
+#filter just TN data
+outputs<-outputs[which(outputs$state=="TN"),]
+
+#create column for julian date
+outputs$julian_date <- yday(outputs$date)
+
+#create column for month
+outputs <- mutate(outputs, month=month(outputs$date))
+
+#create column for year
+outputs <- mutate(outputs, year=year(outputs$date))
+
+```
+<p>&nbsp;</p>
+## Let's look at a couple of plots
+<p>&nbsp;</p>
+
+```{r plots, echo=FALSE, include = FALSE}
+June2022 <- ggplot(outputs%>%
+                      filter(year==2022,month==6), aes(y= Tcrit.mn, x= id)) +
+  coord_flip()+
+  geom_point()+
+  scale_x_discrete(limit=rev)+
+  geom_errorbar(aes(ymax=Tcrit.uci,ymin=Tcrit.lci),width=0.5)+
+  geom_hline(yintercept = 44.4, color= "red")+ #record high temp
+  geom_hline(yintercept = 42.8, linetype = 2, color= "orange")+ #record june high temp
+  geom_hline(yintercept = 38.3, linetype = 3, color= "blue")+ #highest temp June 2022
+  ylab("Critical Temperature (°C)")+
+  xlab("Species")+
+  ylim(30, 55)+
+  ggtitle("June 2022")+
+  theme(panel.border = element_blank(),  
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        legend.spacing.y = unit(0, "cm"),
+        legend.position=c("RIGHT"))
+June2022
+
+July2022 <- ggplot(outputs%>%
+                     filter(year==2022,month==7), aes(y= Tcrit.mn, x= id)) +
+  coord_flip()+
+  geom_point()+
+  scale_x_discrete(limit=rev)+
+  geom_errorbar(aes(ymax=Tcrit.uci,ymin=Tcrit.lci),width=0.5)+
+  geom_hline(yintercept = 44.4, color= "red")+ #record high temp
+  geom_hline(yintercept = 43.3, linetype = 2, color= "orange")+ #record July high temp
+  geom_hline(yintercept = 38.9, linetype = 3, color= "blue")+ #highest temp July 2022
+  ylab("Critical Temperature (°C)")+
+  xlab("Species")+
+  ylim(30, 55)+
+  ggtitle("July 2022")+
+  theme_bw()+
+  theme(legend.position="none")+
+  theme(panel.border = element_blank(),  
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"))
+July2022
+
+June2023 <- ggplot(outputs%>%
+                     filter(year==2023,month==6), aes(y= Tcrit.mn, x= id)) +
+  coord_flip()+
+  geom_point()+
+  scale_x_discrete(limit=rev)+
+  geom_errorbar(aes(ymax=Tcrit.uci,ymin=Tcrit.lci),width=0.5)+
+  geom_hline(yintercept = 44.4, color= "red")+ #record high temp
+  geom_hline(yintercept = 42.8, linetype = 2, color= "orange")+ #record June high temp
+  geom_hline(yintercept = 38.3, linetype = 3, color= "blue")+ #highest temp June 2023
+  ylab("Critical Temperature (°C)")+
+  xlab("Species")+
+  ylim(30, 55)+
+  ggtitle("June 2023")+
+  theme_bw()+
+  theme(legend.position="none")+
+  theme(panel.border = element_blank(),  
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"))
+June2023
+
+July2023 <- ggplot(outputs%>%
+                     filter(year==2023,month==7), aes(y= Tcrit.mn, x= id)) +
+  coord_flip()+
+  geom_point()+
+  geom_errorbar(aes(ymax=Tcrit.uci,ymin=Tcrit.lci),width=0.5)+
+  scale_x_discrete(limit=rev)+
+  geom_hline(yintercept = 44.4, color= "red")+ #record high temp
+  geom_hline(yintercept = 43.3, linetype = 2, color= "orange")+ #record July high temp
+  geom_hline(yintercept = 37.2, linetype = 3, color= "blue")+ #highest temp July 2023
+  ylab("Critical Temperature (°C)")+
+  xlab("Species")+
+  ylim(30, 55)+
+  ggtitle("July 2023")+
+  theme_bw()+
+  theme(legend.position="none")+
+  theme(panel.border = element_blank(),  
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"))
+July2023
+```
+
+```{r plot display, echo=FALSE}
+grid.arrange(June2022,July2022, June2023,July2023,ncol=2)
+```
+
+<p>&nbsp;</p>
+We can see the T~crit~ for 11 species of trees found on the farm along with the all time record high temperature for Clarksville (red line), the hottest temperature for the respective month (orange line), and the highest temperature observed during the collection month (blue line).
+
+## Co-linearity and correlation
+```{r co-linearity, echo= FALSE}
+pairs_slice <- outputs %>%
+  select(1,3,13,15)
+pairs(pairs_slice[,2:4], lower.panel=NULL)
+```
+
+```{r correlation, echo= FALSE}
+correlation <- cor(pairs_slice[,2:4])
+round(correlation, 2)
+```
+It does not appear there is any co-linearity among the variables.
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+## Global model
+<p>&nbsp;</p>
+
+Now we can take a look at our global model.
+
+```{r global model, echo= FALSE, warning=FALSE}
+global_mod <- lm(Tcrit.mn ~ id + julian_date + year, data = outputs, na.action="na.fail")
+
+olsrr::ols_plot_added_variable(global_mod)
+```
+
+
+```{r dredge, echo=FALSE}
+results <- dredge(global_mod)
+results
+```
+<p>&nbsp;</p>
+Now we can trim the list of models down to only models with a AIC delta of less than 5.
+<p>&nbsp;</p>
+
+```{r subet models, echo=FALSE}
+subset(results, delta <5)
+```
+
+<p>&nbsp;</p>
+Now we can trim the list of models down to only models with a AIC delta of less than 5.
+<p>&nbsp;</p>
+
+```{r sum of weights, echo=FALSE}
+MuMIn::sw(results)
+```
+
+```{r new results, echo=FALSE}
+new_results<-dredge(global_mod, subset= !(id))
+new_results
+```
+
+```{r final plots, echo=FALSE, warning=FALSE}
+
+outputs$year <- as.factor(outputs$year)
+
+fp1 <- ggplot(outputs, aes(x= julian_date, y=Tcrit.mn, color = year))+
+  geom_point(size=3)+
+  geom_smooth(method = "lm")
+
+fp1
+
+```
+
+
+## On this day...{style="color:red"}
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+```{r, echo=FALSE}
+knitr::include_graphics("images/paper.jpeg", dpi = 200)
+``` 
+  
+**Black Thursday that began the 1929 stock market crash and the Bloody Friday crash in 2008 both occurred!**
