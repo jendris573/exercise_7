@@ -47,3 +47,13 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+
+# My folders
+images/
+data/
+figures/
+examples/
+
+#sandbox script
+sandbox.R
